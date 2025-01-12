@@ -5,6 +5,7 @@
 <div
     class="alerta"
 >
+  
     <slot></slot>
 </div>
 
@@ -21,6 +22,7 @@
     background-color: var(--blanco);
     border-left: .5rem solid #B91C1C;
     color: #B91C1C;
+    margin-bottom: 2rem;
 }
 
 
