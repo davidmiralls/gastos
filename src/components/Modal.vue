@@ -1,11 +1,11 @@
 <script setup>
-    import { ref } from "vue";
+    import { ref, computed } from "vue";
     import cerrarModal from '../assets/img/cerrar.svg'
     import Alerta from './Alerta.vue';
 
     const error =ref('')
 
-    const emit= defineEmits(['ocultar-modal','guardar-gasto','update:nombre', 'update:cantidad', 'update:categoria'])
+    const emit= defineEmits(['ocultar-modal','guardar-gasto','eliminar-gasto','update:nombre', 'update:cantidad', 'update:categoria'])
     const props= defineProps({
         modal:{
             type:Object,
@@ -27,12 +27,20 @@
             disponible:{
                 type: Number,
                 required: true
+        },
+            id: {
+                type: [String, null],
+                required: true
             }
+
        
     })
+
+    const old = props.cantidad
+    
     const agregarGasto = ()=>{
             //validar que no haya campos vacios
-           const { cantidad, categoria, nombre, disponible} = props
+           const { cantidad, categoria, nombre, disponible, id} = props
 
             if([nombre, cantidad, categoria].includes('')){
                 error.value = 'Todos los campos son obligatorios'
@@ -40,6 +48,33 @@
                     error.value= ''
                 }, 3000);
                 return
+            }
+
+            // validadr cantidad teniendo en cuenta si se está editanodo o no
+            if(id){
+                // tomar en cuenta el gasto ya realizado
+                if(cantidad > old + disponible){
+                    error.value = 'Has excedido el presupuesto'
+                setTimeout(() => {
+                    error.value= ''
+                }, 3000);
+                return
+
+                }
+
+
+            }else{
+                   // validar que el usuario no gaste más de lo dispnible
+            if(cantidad>disponible){
+                error.value = 'Has excedido el presupuesto'
+                setTimeout(() => {
+                    error.value= ''
+                }, 3000);
+                return
+                
+
+            }
+
             }
 
             //validar la cantidad
@@ -52,16 +87,7 @@
                 
 
             }
-            // validar que el usuario no gaste más de lo dispnible
-            if(cantidad>disponible){
-                error.value = 'Has excedido el presupuesto'
-                setTimeout(() => {
-                    error.value= ''
-                }, 3000);
-                return
-                
-
-            }
+         
 
             emit('guardar-gasto')
 
@@ -70,6 +96,10 @@
 
 
     }
+    const isEditing = computed(()=>{
+        return props.id
+
+    })
 
 </script>
 
@@ -89,7 +119,7 @@
             class="nuevo-gasto"
             @submit.prevent="agregarGasto"
         >
-             <legend>Añadir Gasto</legend>
+             <legend>{{ isEditing ? 'Guardar Cambios' : 'Anadir gasto' }}</legend>
 
              <Alerta v-if="error">{{ error }}</Alerta>
         
@@ -129,10 +159,18 @@
             </div>
                     <input 
                         type="submit"
-                        value="Añadir Gasto"           
-                        
-                        >
+                        :value="[ isEditing ? 'Guardar Cambios' : 'Anadir gasto']"           
+                         >
+
         </form>
+        <button
+            type="button"
+            class="btn-eliminar"
+            v-if="isEditing"
+            @click="$emit('eliminar-gasto')"
+            >
+            Eliminar Gasto
+        </button>
     </div>
 </div>
 
@@ -206,6 +244,17 @@
         font-weight: 700;
         cursor: pointer;
 
+    }
+    .btn-eliminar{
+        border: none;
+        padding: 1rem;
+        width: 100%;
+        background-color: #ef4444;
+        font-weight:700;
+        font-size: 1.7rem;
+        color: var(--blanco);
+        margin-top: 10rem;
+        cursor: pointer;
     }
 
 </style>
